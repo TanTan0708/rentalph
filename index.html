@@ -602,8 +602,16 @@
                     const amountDisplay = formatAmountForDisplay(amount);
                     const remarks = row[4] || '';       // 5th column - Remarks
                     
-                    const isDeposit = remarks && remarks.toString().toLowerCase().includes('deposit');
-                    const statusAttr = isDeposit ? 'deposit' : 'unpaid';
+                    // Determine filter status: unpaid = blank remarks, deposit = has "deposit", other = other remarks
+                    let statusAttr = 'unpaid';
+                    if (remarks) {
+                        const remarksLower = remarks.toString().toLowerCase();
+                        if (remarksLower.includes('deposit')) {
+                            statusAttr = 'deposit';
+                        } else {
+                            statusAttr = 'other';
+                        }
+                    }
                     
                     // Determine status styling based on remarks
                     let statusClass = 'status-unpaid';
@@ -769,8 +777,16 @@
                 const amount = row[3] || '';
                 const remarks = row[4] || '';
                 
-                const isDeposit = remarks && remarks.toString().toLowerCase().includes('deposit');
-                const statusAttr = isDeposit ? 'deposit' : 'unpaid';
+                // Determine filter status: unpaid = blank remarks, deposit = has "deposit", other = other remarks
+                let statusAttr = 'unpaid';
+                if (remarks) {
+                    const remarksLower = remarks.toString().toLowerCase();
+                    if (remarksLower.includes('deposit')) {
+                        statusAttr = 'deposit';
+                    } else {
+                        statusAttr = 'other';
+                    }
+                }
                 const searchText = `${month} ${room} ${date} ${amount} ${remarks}`.toLowerCase();
                 
                 editHTML += `
