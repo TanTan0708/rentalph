@@ -283,6 +283,11 @@
             color: #383d41;
         }
 
+        .status-paid {
+            background: #d4edda;
+            color: #155724;
+        }
+
         .edit-table {
             width: 100%;
             border-collapse: collapse;
@@ -530,6 +535,84 @@
             return n.toLocaleString('en-US', { minimumFractionDigits: fracDigits, maximumFractionDigits: fracDigits });
         }
 
+        function showUnpaidAllLocations() {
+            let allUnpaidHTML = `
+                <div class="fade-in">
+                    <h2 class="section-title">Unpaid Records - All Locations</h2>
+                    <button class="btn btn-outline" onclick="showSummary()" style="margin-bottom: 16px;">← Back</button>
+            `;
+
+            let foundAny = false;
+            const locations = Object.keys(workbookData).sort();
+
+            locations.forEach(location => {
+                const data = workbookData[location];
+                if (!data || data.length < 2) return;
+
+                const rows = data.slice(1);
+                const unpaidRows = rows.filter(row => {
+                    const hasData = row && row.some(cell => cell !== undefined && cell !== null && cell !== '');
+                    if (!hasData) return false;
+                    const remarks = row[4] || '';
+                    return !remarks || remarks === '';
+                });
+
+                if (unpaidRows.length > 0) {
+                    foundAny = true;
+                    allUnpaidHTML += `
+                        <div style="margin-bottom: 24px; padding: 16px; background: var(--bg-secondary); border-radius: 8px;">
+                            <h3 style="margin-top: 0; color: var(--text-primary);">${location} <span style="color: var(--text-secondary); font-weight: normal;">(${unpaidRows.length} unpaid)</span></h3>
+                            <table class="summary-table">
+                                <thead>
+                                    <tr>
+                                        <th>Month</th>
+                                        <th>Room</th>
+                                        <th>Date</th>
+                                        <th>Amount</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                    `;
+
+                    unpaidRows.forEach(row => {
+                        const month = row[0] || 'N/A';
+                        const room = row[1] || 'N/A';
+                        const date = row[2] !== undefined ? row[2] : 'N/A';
+                        const amount = row[3] || '';
+                        const amountDisplay = formatAmountForDisplay(amount);
+
+                        allUnpaidHTML += `
+                            <tr>
+                                <td>${month}</td>
+                                <td><strong>${room}</strong></td>
+                                <td>${date}</td>
+                                <td>${amountDisplay}</td>
+                            </tr>
+                        `;
+                    });
+
+                    allUnpaidHTML += `
+                                </tbody>
+                            </table>
+                        </div>
+                    `;
+                }
+            });
+
+            if (!foundAny) {
+                allUnpaidHTML += `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">✨</div>
+                        <h3 style="color: var(--success);">All Rooms Paid!</h3>
+                        <p>No unpaid records across all locations</p>
+                    </div>
+                `;
+            }
+
+            allUnpaidHTML += '</div>';
+            contentDisplay.innerHTML = allUnpaidHTML;
+        }
+
         function showSummary() {
             const location = locationSelect.value;
             if (!location) {
@@ -566,8 +649,9 @@
                     <div style="margin-bottom: 20px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
                         <input type="text" id="searchInput" placeholder="🔍 Search by room, month, remarks..." style="flex: 1; min-width: 250px; padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 14px;">
                         <button class="btn btn-primary" onclick="filterByStatus('all')" id="filterAll">All</button>
-                        <button class="btn btn-outline" onclick="filterByStatus('deposit')" id="filterDeposit">💰 Deposit</button>
+                        <button class="btn btn-outline" onclick="filterByStatus('paid')" id="filterPaid">✓ Paid</button>
                         <button class="btn btn-outline" onclick="filterByStatus('unpaid')" id="filterUnpaid">✗ Unpaid</button>
+                        <button class="btn btn-outline" onclick="showUnpaidAllLocations()" id="unpaidAllBtn">🔍 Unpaid (All Locations)</button>
                     </div>
             `;
 
@@ -602,16 +686,8 @@
                     const amountDisplay = formatAmountForDisplay(amount);
                     const remarks = row[4] || '';       // 5th column - Remarks
                     
-                    // Determine filter status: unpaid = blank remarks, deposit = has "deposit", other = other remarks
-                    let statusAttr = 'unpaid';
-                    if (remarks) {
-                        const remarksLower = remarks.toString().toLowerCase();
-                        if (remarksLower.includes('deposit')) {
-                            statusAttr = 'deposit';
-                        } else {
-                            statusAttr = 'other';
-                        }
-                    }
+                    // Determine filter status: unpaid = blank amount, paid = has amount
+                    let statusAttr = amount ? 'paid' : 'unpaid';
                     
                     // Determine status styling based on remarks
                     let statusClass = 'status-unpaid';
@@ -631,13 +707,21 @@
                     
                     const searchText = `${month} ${room} ${date} ${amount} ${remarks}`.toLowerCase();
                     
+                    // Determine remarks display
+                    let remarksDisplay = '';
+                    if (remarks) {
+                        remarksDisplay = `<span class="status-badge ${statusClass}">${remarks}</span>`;
+                    } else if (amount) {
+                        remarksDisplay = `<span class="status-badge status-paid">Paid</span>`;
+                    }
+                    
                     summaryHTML += `
                         <tr data-status="${statusAttr}" data-search="${searchText}" data-row-idx="${idx}">
                             <td>${month}</td>
                             <td><strong>${room}</strong></td>
                             <td>${date}</td>
                             <td>${amountDisplay}</td>
-                                <td>${remarks ? `<span class="status-badge ${statusClass}">${remarks}</span>` : ''}</td>
+                                <td>${remarksDisplay}</td>
                         </tr>
                     `;
                 });
@@ -749,7 +833,7 @@
                     <div style="margin-bottom: 20px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
                         <input type="text" id="editSearchInput" placeholder="🔍 Search by room, month, remarks..." style="flex: 1; min-width: 250px; padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 14px;">
                         <button class="btn btn-primary" onclick="filterEditByStatus('all')" id="editFilterAll">All</button>
-                        <button class="btn btn-outline" onclick="filterEditByStatus('deposit')" id="editFilterDeposit">💰 Deposit</button>
+                        <button class="btn btn-outline" onclick="filterEditByStatus('paid')" id="editFilterPaid">✓ Paid</button>
                         <button class="btn btn-outline" onclick="filterEditByStatus('unpaid')" id="editFilterUnpaid">✗ Unpaid</button>
                     </div>
                     
@@ -777,16 +861,8 @@
                 const amount = row[3] || '';
                 const remarks = row[4] || '';
                 
-                // Determine filter status: unpaid = blank remarks, deposit = has "deposit", other = other remarks
-                let statusAttr = 'unpaid';
-                if (remarks) {
-                    const remarksLower = remarks.toString().toLowerCase();
-                    if (remarksLower.includes('deposit')) {
-                        statusAttr = 'deposit';
-                    } else {
-                        statusAttr = 'other';
-                    }
-                }
+                // Determine filter status: unpaid = blank amount, paid = has amount
+                let statusAttr = amount ? 'paid' : 'unpaid';
                 const searchText = `${month} ${room} ${date} ${amount} ${remarks}`.toLowerCase();
                 
                 editHTML += `
