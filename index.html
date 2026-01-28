@@ -565,8 +565,9 @@
                 const unpaidRows = rows.filter(row => {
                     const hasData = row && row.some(cell => cell !== undefined && cell !== null && cell !== '');
                     if (!hasData) return false;
-                    const remarks = row[4] || '';
-                    return !remarks || remarks === '';
+                    const amount = row[3] || '';
+                    // Only include if amount is blank/empty (truly unpaid)
+                    return !amount || amount === '';
                 });
 
                 if (unpaidRows.length > 0) {
@@ -579,8 +580,7 @@
                                     <tr>
                                         <th>Month</th>
                                         <th>Room</th>
-                                        <th>Date</th>
-                                        <th>Amount</th>
+                                        <th>Remarks</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -589,16 +589,13 @@
                     unpaidRows.forEach(row => {
                         const month = row[0] || 'N/A';
                         const room = row[1] || 'N/A';
-                        const date = row[2] !== undefined ? row[2] : 'N/A';
-                        const amount = row[3] || '';
-                        const amountDisplay = formatAmountForDisplay(amount);
+                        const remarks = row[4] || '';
 
                         allUnpaidHTML += `
                             <tr>
                                 <td>${month}</td>
                                 <td><strong>${room}</strong></td>
-                                <td>${date}</td>
-                                <td>${amountDisplay}</td>
+                                <td>${remarks}</td>
                             </tr>
                         `;
                     });
