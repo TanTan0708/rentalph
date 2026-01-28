@@ -535,6 +535,18 @@
             return n.toLocaleString('en-US', { minimumFractionDigits: fracDigits, maximumFractionDigits: fracDigits });
         }
 
+        function formatRemarkIfNumeric(val) {
+            if (val === undefined || val === null || val === '') return val;
+            const s = String(val).replace(/,/g, '').trim();
+            const n = Number(s);
+            if (!isFinite(n)) return val;
+            let fracDigits = 0;
+            if (s.indexOf('.') >= 0) {
+                fracDigits = Math.min(s.split('.')[1].length, 20);
+            }
+            return n.toLocaleString('en-US', { minimumFractionDigits: fracDigits, maximumFractionDigits: fracDigits });
+        }
+
         function showUnpaidAllLocations() {
             let allUnpaidHTML = `
                 <div class="fade-in">
@@ -710,7 +722,8 @@
                     // Determine remarks display
                     let remarksDisplay = '';
                     if (remarks) {
-                        remarksDisplay = `<span class="status-badge ${statusClass}">${remarks}</span>`;
+                        const formattedRemark = formatRemarkIfNumeric(remarks);
+                        remarksDisplay = `<span class="status-badge ${statusClass}">${formattedRemark}</span>`;
                     } else if (amount) {
                         remarksDisplay = `<span class="status-badge status-paid">Paid</span>`;
                     }
