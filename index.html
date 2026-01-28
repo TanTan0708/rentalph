@@ -518,6 +518,18 @@
 
         summaryBtn.addEventListener('click', showSummary);
 
+        function formatAmountForDisplay(val) {
+            if (val === undefined || val === null || val === '') return '';
+            const s = String(val).replace(/,/g, '').trim();
+            const n = Number(s);
+            if (!isFinite(n)) return val;
+            let fracDigits = 0;
+            if (s.indexOf('.') >= 0) {
+                fracDigits = Math.min(s.split('.')[1].length, 20);
+            }
+            return n.toLocaleString('en-US', { minimumFractionDigits: fracDigits, maximumFractionDigits: fracDigits });
+        }
+
         function showSummary() {
             const location = locationSelect.value;
             if (!location) {
@@ -587,6 +599,7 @@
                     const room = row[1] || 'N/A';       // 2nd column - Room
                     const date = row[2] !== undefined ? row[2] : 'N/A';       // 3rd column - Date
                     const amount = row[3] || '';        // 4th column - Amount
+                    const amountDisplay = formatAmountForDisplay(amount);
                     const remarks = row[4] || '';       // 5th column - Remarks
                     
                     const isDeposit = remarks && remarks.toString().toLowerCase().includes('deposit');
@@ -615,8 +628,8 @@
                             <td>${month}</td>
                             <td><strong>${room}</strong></td>
                             <td>${date}</td>
-                            <td>${amount}</td>
-                            <td><span class="status-badge ${statusClass}">${remarks || 'No Payment'}</span></td>
+                            <td>${amountDisplay}</td>
+                                <td>${remarks ? `<span class="status-badge ${statusClass}">${remarks}</span>` : ''}</td>
                         </tr>
                     `;
                 });
