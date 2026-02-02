@@ -568,7 +568,7 @@
                     const amount = row[3] || '';
                     const remarks = (row[4] || '').toString().trim();
                     // Only include if amount is blank/empty AND remarks is NOT "Vacant"
-                    return (!amount || amount === '') && remarks.toLowerCase() !== 'vacant';
+                    return (!amount || amount === '') && remarks.toLowerCase() !== 'vacant' && remarks.toLowerCase() !== 'vacant/exit';
                 });
 
                 if (unpaidRows.length > 0) {
