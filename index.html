@@ -566,8 +566,9 @@
                     const hasData = row && row.some(cell => cell !== undefined && cell !== null && cell !== '');
                     if (!hasData) return false;
                     const amount = row[3] || '';
-                    // Only include if amount is blank/empty (truly unpaid)
-                    return !amount || amount === '';
+                    const remarks = (row[4] || '').toString().trim();
+                    // Only include if amount is blank/empty AND remarks is NOT "Vacant"
+                    return (!amount || amount === '') && remarks.toLowerCase() !== 'vacant';
                 });
 
                 if (unpaidRows.length > 0) {
