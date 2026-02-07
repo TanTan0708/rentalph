@@ -567,8 +567,9 @@
                     if (!hasData) return false;
                     const amount = row[3] || '';
                     const remarks = (row[4] || '').toString().trim();
+                    const month = row[0] || ''; //added month -ethan
                     // Only include if amount is blank/empty AND remarks is NOT "Vacant"
-                    return (!amount || amount === '') && remarks.toLowerCase() !== 'vacant' && remarks.toLowerCase() !== 'vacant/exit';
+                    return (!amount || amount === '') && remarks.toLowerCase() !== 'vacant' && remarks.toLowerCase() !== 'vacant/exit' && month !== ''; //added the "month !== ''" condition to avoid counting empty rows as unpaid -- ethan
                 });
 
                 if (unpaidRows.length > 0) {
